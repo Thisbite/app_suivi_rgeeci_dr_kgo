@@ -207,8 +207,7 @@ def reponse():
 
                 submit_button = st.form_submit_button(label='Enregistrer')
                 if submit_button:
-                    if (nom_zd and nom_ilot and numero_agent and nbre_UE_total and nbre_UE_partiel
-                            and nbre_UE_informel and nbre_UE_formel and nbre_UE_refus):
+                    if (nom_zd and nom_ilot and numero_agent):
                         # Récupération de la date actuelle
                         import datetime
                         date_aujourdhui=datetime.datetime.now().strftime("%Y-%m-%d")
