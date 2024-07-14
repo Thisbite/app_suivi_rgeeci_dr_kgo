@@ -627,7 +627,7 @@ def chef_equipe_update_page():
     # Option pour sélectionner une ligne à modifier
     if st.checkbox("Modifier une equipe", key="chef_equipe_modification"):
         # Sélectionner l'ID du chef d'équipe à modifier
-        id_options = [1, 2, 3]  # Exemple : remplacer par une liste d'IDs disponibles dans votre base de données
+        id_options = [1, 2, 3,4,5,6,7,8,9,10,11,12,13,14,15]  # Exemple : remplacer par une liste d'IDs disponibles dans votre base de données
         selected_id = st.selectbox("Choisir l'ID du chef d'équipe à modifier", id_options, key="select_chef_equipe")
 
         if selected_id:
