@@ -1,5 +1,7 @@
 import sqlite3
 
+import pandas as pd
+
 conn = sqlite3.connect("rgeeci.db")
 c = conn.cursor()
 
@@ -672,10 +674,10 @@ import streamlit as st
 def zone_denombrement_update_page():
     # Option pour sélectionner une ligne à modifier
     if st.checkbox("Modifier une ZD", key="zone_denombrement_modification"):
-        # Sélectionner l'ID de la zone de dénombrement à modifier
-        id_options = [1, 2, 3]  # Exemple : remplacer par une liste d'IDs disponibles dans votre base de données
-        selected_id = st.selectbox("Choisir l'ID de la zone de dénombrement à modifier", id_options,
-                                   key="select_zone_denombrement")
+
+
+        selected_id = st.number_input("Saisie l'ID de la zone de dénombrement à modifier",
+                             key="select_zone_denombrement")
 
         if selected_id:
             # Charger les détails de la zone de dénombrement sélectionnée
@@ -719,8 +721,8 @@ def ilot_update_page():
     # Option pour sélectionner une ligne à modifier
     if st.checkbox("Modifier un ilot", key="ilot_modification"):
         # Sélectionner l'ID de l'îlot à modifier
-        id_options = [1, 2, 3]  # Exemple : remplacer par une liste d'IDs disponibles dans votre base de données
-        selected_id = st.selectbox("Choisir l'ID de l'îlot à modifier", id_options, key="select_ilot")
+        #id_options = [1, 2, 3]  # Exemple : remplacer par une liste d'IDs disponibles dans votre base de données
+        selected_id = st.number_input("Saisir l'ID de l'îlot à modifier", key="select_ilot")
 
         if selected_id:
             # Charger les détails de l'îlot sélectionné
@@ -740,3 +742,31 @@ def ilot_update_page():
                     st.success("Îlot mis à jour avec succès.")
             else:
                 st.warning(f"Aucun îlot trouvé avec l'ID {selected_id}.")
+
+
+def vue():
+    conn = sqlite3.connect("rgeeci.db")
+    try:
+        c = conn.cursor()
+
+        # Sélection des données depuis la base de données
+        c.execute("SELECT * FROM ilot")
+        df1 = pd.DataFrame(c.fetchall(), columns=["ID","Nom ilot","Nom ZD"])  # Remplacez ... par les noms des colonnes de votre table 'ilot'
+
+        c.execute("SELECT * FROM zone_denombrement")
+        df2 = pd.DataFrame(c.fetchall(), columns=["ID","Nom ZD", "Sous-préfecture", "Nom quartier"])
+
+        c.execute("SELECT * FROM sous_prefecture")
+        df3 = pd.DataFrame(c.fetchall(), columns=["ID","nom sous-prefecture", "Nom département"])
+
+        c.execute("SELECT numero_equipe, nom_chef_equipe FROM chef_equipe")
+        df4 = pd.DataFrame(c.fetchall(), columns=["Numero equipe", "Nom du CE"])
+
+        return df1, df2, df3, df4
+
+    except sqlite3.Error as e:
+        print(f"Erreur lors de l'exécution de la requête SQL : {e}")
+
+    finally:
+        conn.close()
+

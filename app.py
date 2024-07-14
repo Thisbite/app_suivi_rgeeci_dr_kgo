@@ -119,13 +119,13 @@ def main():
 
         st.sidebar.title("Navigation")
         if st.session_state['user_role'] == 'superviseur':
-            pages = st.sidebar.selectbox("Choisir une page", ["Saisie les statistiques", "Statistique", "Configuration"])
+            pages = st.sidebar.selectbox("Choisir une page", [ "Statistiques","Saisie les statistiques", "Configuration"])
         elif st.session_state['user_role'] == 'chef_equipe':
-            pages = st.sidebar.selectbox("Choisir une page", ["Saisie les statistiques", "Statistique"])
+            pages = st.sidebar.selectbox("Choisir une page", ["Statistiques","Saisie les statistiques"])
 
         if pages == "Saisie les statistiques":
             page.reponse()
-        elif pages == "Statistique":
+        elif pages == "Statistiques":
             moyen, sous_p, dep, region = connexion.statistiques_par_agent_et_entite()
             st.write("_________________________________________________")
             st.subheader("Rendement moyen par agents")
@@ -165,6 +165,16 @@ def main():
             st.write("_________________________________________________")
             data.ilot_update_page()
             st.write("_________________________________________________")
+            if st.checkbox("Vue sur table",key="vue12"):
+                d1,d2,d3,d4=data.vue()
+                st.write(d1)
+                st.write("_________________________________________________")
+                st.write(d2)
+                st.write("_________________________________________________")
+                st.write(d3)
+                st.write("_________________________________________________")
+                st.write(d4)
+                st.write("_________________________________________________")
 
 
     else:
