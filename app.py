@@ -1,5 +1,6 @@
 import streamlit as st
 import connexion
+import data
 import  page
 
 import page  # Assurez-vous que la fonction authenticate_user est importée depuis le module page
@@ -126,19 +127,45 @@ def main():
             page.reponse()
         elif pages == "Statistique":
             moyen, sous_p, dep, region = connexion.statistiques_par_agent_et_entite()
+            st.write("_________________________________________________")
             st.subheader("Rendement moyen par agents")
+            st.write("_________________________________________________")
             st.dataframe(moyen)
+            st.write("_________________________________________________")
             st.subheader("Statistiques par Sous-prefecture")
+            st.write("_________________________________________________")
             st.dataframe(sous_p)
+            st.write("_________________________________________________")
             st.subheader("Statistiques par département")
+            st.write("_________________________________________________")
             st.dataframe(dep)
+            st.write("_________________________________________________")
             st.subheader("Statistiques par région")
+            st.write("_________________________________________________")
             st.dataframe(region)
+            st.write("_________________________________________________")
             st.subheader("Données globales et exportation")
+            st.write("_________________________________________________")
             df = connexion.get_reponse_data()
+            st.write("_________________________________________________")
             st.dataframe(df)
+            st.write("_________________________________________________")
         elif pages == "Configuration":
             page.localite()
+            st.write("_________________________________________________")
+            data.chef_equipe_update_page()
+            st.write("_________________________________________________")
+            data.superviseur_update_page()
+            st.write("_________________________________________________")
+            data.departement_update_page()
+            st.write("_________________________________________________")
+            data.sous_prefecture_update_page()
+            st.write("_________________________________________________")
+            data.zone_denombrement_update_page()
+            st.write("_________________________________________________")
+            data.ilot_update_page()
+            st.write("_________________________________________________")
+
 
     else:
         login_page()

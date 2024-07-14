@@ -33,9 +33,9 @@ import connexion
 
 # Fonction pour la page de configuration
 def localite():
-    st.title("Paramètre de suivi de collecte RGEECI")
+    st.subheader("Paramètre de suivi de collecte RGEECI")
 
-    table = st.selectbox('Sélectionnez la table', ['region', 'departement', 'sous_prefecture', 'zone_denombrement', 'ilot', 'superviseur', 'chef_equipe', 'agent'])
+    table = st.selectbox('Sélectionnez le formulaire', ['region', 'departement', 'sous_prefecture', 'zone_denombrement', 'ilot', 'superviseur', 'chef_equipe', 'agent'])
 
     if table == 'region':
         with st.form(key='region_form'):
@@ -253,3 +253,8 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+
+
+
+
