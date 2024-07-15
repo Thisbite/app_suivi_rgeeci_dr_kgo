@@ -5,8 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31d60b3a-9bf1-40d2-8ad3-75d1348fb667" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Configuration.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Configuration_v2.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Configuration_v3.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Configuration_v4.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Configuration_v5.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/admin.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/reponse_data.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/connexion.py" beforeDir="false" afterPath="$PROJECT_DIR$/connexion.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/data.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/page.py" beforeDir="false" afterPath="$PROJECT_DIR$/page.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rgeeci.db" beforeDir="false" afterPath="$PROJECT_DIR$/rgeeci.db" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

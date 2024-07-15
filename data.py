@@ -5,7 +5,7 @@ import pandas as pd
 conn = sqlite3.connect("rgeeci.db")
 c = conn.cursor()
 
-#c.execute(" DROP TABLE reponse")
+#c.execute(" DROP TABLE region")
 
 def create_tables():
     # Connexion à la base de données SQLite

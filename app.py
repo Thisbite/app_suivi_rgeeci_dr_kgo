@@ -1,101 +1,93 @@
 import streamlit as st
+
+
+# CSS personnalisé pour le style de la page avec les couleurs du drapeau de la Côte d'Ivoire
+st.markdown("""
+    <style>
+        .stApp {
+            background-color: #FFFFFF;  /* Couleur de fond */
+        }
+        .css-1d391kg {
+            background-color: #FFFFFF;  /* Couleur de fond du conteneur principal */
+        }
+        .stTextInput > div {
+            background-color: #FFFFFF;  /* Couleur de fond des champs de saisie de texte */
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #CCCCCC;
+        }
+        .stTextInput input {
+            border: none;
+            color: #000000;  /* Couleur du texte */
+        }
+        .stTextInput input:focus {
+            outline: none;
+            box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.1);
+        }
+        .stButton button {
+            background-color: #FF8000;  /* Couleur orange pour le bouton */
+            color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .stButton button:hover {
+            background-color: #FFA64D;  /* Orange plus clair au survol */
+        }
+        .stAlert div {
+            background-color: #FFFFFF;  /* Couleur de fond des alertes */
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #CCCCCC;
+        }
+        .css-1siy2j7 {
+            color: #00A859;  /* Couleur verte pour les messages de succès */
+            font-weight: bold;
+        }
+        .css-10trblm {
+            color: #FF8000;  /* Couleur orange pour les messages d'erreur */
+            font-weight: bold;
+        }
+        .css-10trblm h1 {
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+
+import streamlit as st
 import connexion
 import data
-import  page
-
-import page  # Assurez-vous que la fonction authenticate_user est importée depuis le module page
+import page
 
 def login_page():
-    # Adding CSS for the colors of the Côte d'Ivoire flag (orange, white, green)
-    st.markdown("""
-        <style>
-            .stApp {
-                background-color: #FFFFFF;  /* Background color */
-            }
-            .css-1d391kg {
-                background-color: #FFFFFF;  /* Background color of the main container */
-            }
-            .stTextInput > div {
-                background-color: #FFFFFF;  /* Background color of the text input fields */
-                border-radius: 8px;
-                padding: 10px;
-                border: 1px solid #CCCCCC;
-            }
-            .stTextInput input {
-                border: none;
-                color: #000000;  /* Text color */
-            }
-            .stTextInput input:focus {
-                outline: none;
-                box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.1);
-            }
-            .stButton button {
-                background-color: #FF8000;  /* Orange color for the button */
-                color: #FFFFFF;
-                border: none;
-                border-radius: 8px;
-                padding: 10px 20px;
-                cursor: pointer;
-                font-weight: bold;
-            }
-            .stButton button:hover {
-                background-color: #FFA64D;  /* Lighter orange on hover */
-            }
-            .stAlert div {
-                background-color: #FFFFFF;  /* Background color of alert boxes */
-                border-radius: 8px;
-                padding: 10px;
-                border: 1px solid #CCCCCC;
-            }
-            .css-1siy2j7 {
-                color: #00A859;  /* Green color for success messages */
-                font-weight: bold;
-            }
-            .css-10trblm {
-                color: #FF8000;  /* Orange color for error messages */
-                font-weight: bold;
-            }
-            .css-10trblm h1 {
-                font-weight: bold;
-            }
-        </style>
-    """, unsafe_allow_html=True)
+    st.title("Système de Suivi de Collecte RGEECI")
 
-    st.title("Connexion")
-
+    # Matricule et mot de passe pour la connexion
     matricule = st.text_input("Matricule")
     password = st.text_input("Mot de passe", type="password")
-    submit_button = st.button("Se connecter")
-
-    if submit_button:
-        user_role, user_matricule = page.authenticate_user(matricule, password)
-
-        if user_role == 'superviseur':
-            st.success("Connexion réussie en tant que superviseur.")
+    if st.button("Connexion"):
+        role, user_matricule = page.authenticate_user(matricule, password)
+        if role:
             st.session_state['logged_in'] = True
-            st.session_state['user_role'] = 'superviseur'
             st.session_state['user_matricule'] = user_matricule
-            st.experimental_rerun()
-        elif user_role == 'chef_equipe':
-            st.success("Connexion réussie en tant que chef d'équipe.")
-            st.session_state['logged_in'] = True
-            st.session_state['user_role'] = 'chef_equipe'
-            st.session_state['user_matricule'] = user_matricule
-            st.experimental_rerun()
+            st.session_state['user_role'] = role
+            st.success(f"Bienvenue, {role} {user_matricule}")
+            st.experimental_rerun()  # Rafraîchit l'application pour afficher la page principale
         else:
             st.error("Matricule ou mot de passe incorrect.")
 
-
-
-# Page principale
 def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
         st.session_state['user_role'] = None
 
-    if st.session_state['logged_in']:
-        st.markdown(
-            """
+    if not st.session_state['logged_in']:
+        login_page()
+    else:
+        st.markdown("""
             <style>
                 .sidebar .sidebar-content {
                     background-color: #f0f0f0;
@@ -113,15 +105,13 @@ def main():
                     margin-top: 20px;
                 }
             </style>
-            """,
-            unsafe_allow_html=True
-        )
+        """, unsafe_allow_html=True)
 
-        st.sidebar.title("Navigation")
+        st.sidebar.title("Menu")
         if st.session_state['user_role'] == 'superviseur':
-            pages = st.sidebar.selectbox("Choisir une page", [ "Statistiques","Saisie les statistiques", "Configuration"])
+            pages = st.sidebar.selectbox("Choisir menu", [ "Statistiques","Configuration"])
         elif st.session_state['user_role'] == 'chef_equipe':
-            pages = st.sidebar.selectbox("Choisir une page", ["Statistiques","Saisie les statistiques"])
+            pages = st.sidebar.selectbox("Choisir menu", ["Saisie les statistiques"])
 
         if pages == "Saisie les statistiques":
             page.reponse()
@@ -132,7 +122,7 @@ def main():
             st.write("_________________________________________________")
             st.dataframe(moyen)
             st.write("_________________________________________________")
-            st.subheader("Statistiques par Sous-prefecture")
+            st.subheader("Statistiques par équipe et  Sous-prefecture")
             st.write("_________________________________________________")
             st.dataframe(sous_p)
             st.write("_________________________________________________")
@@ -165,8 +155,8 @@ def main():
             st.write("_________________________________________________")
             data.ilot_update_page()
             st.write("_________________________________________________")
-            if st.checkbox("Vue sur table",key="vue12"):
-                d1,d2,d3,d4=data.vue()
+            if st.checkbox("Vue sur table", key="vue12"):
+                d1, d2, d3, d4 = data.vue()
                 st.write(d1)
                 st.write("_________________________________________________")
                 st.write(d2)
@@ -176,8 +166,12 @@ def main():
                 st.write(d4)
                 st.write("_________________________________________________")
 
+        # Ajout du bouton de déconnexion dans le menu latéral
+        if st.sidebar.button("Déconnexion"):
+            st.session_state['logged_in'] = False
+            st.session_state['user_role'] = None
+            st.session_state['user_matricule'] = None
+            st.experimental_rerun()  # Rafraîchit l'application pour afficher la page de connexion
 
-    else:
-        login_page()
-
+# Lancer la fonction principale
 main()

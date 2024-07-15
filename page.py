@@ -1,186 +1,159 @@
 import sqlite3
 import streamlit as st
+from datetime import datetime
 import data
+
+
+# Fonction pour insérer des données dans différentes tables
 def insert_data(table, data):
     conn = sqlite3.connect("rgeeci.db")
     c = conn.cursor()
 
-    if table == 'region':
-        c.execute("INSERT INTO region ( nom) VALUES ( ?)", data)
-    elif table == 'departement':
-        c.execute("INSERT INTO departement ( nom_departement, nom_region) VALUES ( ?, ?)", data)
-    elif table == 'sous_prefecture':
-        c.execute("INSERT INTO sous_prefecture ( nom_sous_prefecture, nom_departement) VALUES ( ?, ?)", data)
-    elif table == 'zone_denombrement':
-        c.execute("INSERT INTO zone_denombrement (nom_zd, nom_sous_prefecture, nom_quartier) VALUES ( ?, ?, ?)", data)
-    elif table == 'ilot':
-        c.execute("INSERT INTO ilot ( nom_ilot, nom_zd) VALUES ( ?, ?)", data)
-    elif table == 'superviseur':
-        c.execute("INSERT INTO superviseur (matricule, nom_sup, nom_region) VALUES (?, ?, ?)", data)
-    elif table == 'chef_equipe':
-        c.execute("INSERT INTO chef_equipe (numero_equipe,matricule_ce,nom_chef_equipe, nom_sup) VALUES ( ?,?,?, ?)", data)
-    elif table == 'agent':
-        c.execute("INSERT INTO agent ( numero_agent, numero_equipe) VALUES ( ?, ?)", data)
+    queries = {
+        'region': "INSERT INTO region (nom) VALUES (?)",
+        'departement': "INSERT INTO departement (nom_departement, nom_region) VALUES (?, ?)",
+        'sous_prefecture': "INSERT INTO sous_prefecture (nom_sous_prefecture, nom_departement) VALUES (?, ?)",
+        'zone_denombrement': "INSERT INTO zone_denombrement (nom_zd, nom_sous_prefecture, nom_quartier) VALUES (?, ?, ?)",
+        'ilot': "INSERT INTO ilot (nom_ilot, nom_zd) VALUES (?, ?)",
+        'superviseur': "INSERT INTO superviseur (matricule, nom_sup, nom_region) VALUES (?, ?, ?)",
+        'chef_equipe': "INSERT INTO chef_equipe (numero_equipe, matricule_ce, nom_chef_equipe, nom_sup) VALUES (?, ?, ?, ?)",
+        'agent': "INSERT INTO agent (numero_agent, numero_equipe) VALUES (?, ?)"
+    }
 
-    conn.commit()
+    if table in queries:
+        c.execute(queries[table], data)
+        conn.commit()
     conn.close()
+
 
 # Créer les tables si elles n'existent pas
 data.create_tables()
 
-import streamlit as st
-import connexion
 
 # Fonction pour la page de configuration
 def localite():
     st.subheader("Paramètre de suivi de collecte RGEECI")
 
-    table = st.selectbox('Sélectionnez le formulaire', ['region', 'departement', 'sous_prefecture', 'zone_denombrement', 'ilot', 'superviseur', 'chef_equipe', 'agent'])
+    tables = {
+        'region': {'form_key': 'region_form', 'fields': [('Nom', 'text_input')]},
+        'departement': {'form_key': 'departement_form',
+                        'fields': [('Nom Département', 'text_input'), ('Nom Région', 'selectbox', data.get_region())]},
+        'sous_prefecture': {'form_key': 'sous_prefecture_form', 'fields': [('Nom Sous-Prefecture', 'text_input'), (
+        'Nom Département', 'selectbox', data.get_departement())]},
+        'zone_denombrement': {'form_key': 'zone_denombrement_form',
+                              'fields': [('Nom Zone de Dénombrement', 'text_input'),
+                                         ('Nom Sous-Préfecture', 'selectbox', data.get_sous_prefecture()),
+                                         ('Nom Quartier', 'text_input')]},
+        'ilot': {'form_key': 'ilot_form', 'fields': [('Nom Ilot', 'text_input'), (
+        'Nom Zone de Dénombrement', 'selectbox', data.get_zone_denombrement())]},
+        'superviseur': {'form_key': 'superviseur_form',
+                        'fields': [('Matricule', 'text_input'), ('Nom Superviseur', 'text_input'),
+                                   ('Nom Région', 'selectbox', data.get_region())]},
+        'chef_equipe': {'form_key': 'chef_equipe_form',
+                        'fields': [('Numéro Équipe', 'text_input'), ('Matricule du CE', 'text_input'),
+                                   ('Nom du chef équipe', 'text_input'),
+                                   ('Nom Superviseur', 'selectbox', data.get_superviseurs())]},
+        'agent': {'form_key': 'agent_form', 'fields': [('Numéro Agent', 'text_input'), ('Numéro Équipe', 'text_input')]}
+    }
 
-    if table == 'region':
-        with st.form(key='region_form'):
-            nom = st.text_input("Nom")
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if nom:
-                    insert_data('region', (nom,))
-                    st.success("Enregistrement réussi pour la table région.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
+    table = st.selectbox('Sélectionnez le formulaire', list(tables.keys()))
 
-    elif table == 'departement':
-        with st.form(key='departement_form'):
-            nom_departement = st.text_input("Nom Département")
-            regions = data.get_region()  # Assurez-vous que cette fonction renvoie les régions disponibles
-            nom_region = st.selectbox("Nom Région", [region[1] for region in regions])
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if nom_departement and nom_region:
-                    insert_data('departement', (nom_departement, nom_region))
-                    st.success("Enregistrement réussi pour la table département.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
+    with st.form(key=tables[table]['form_key']):
+        inputs = {}
+        for field in tables[table]['fields']:
+            label, input_type = field[0], field[1]
+            if input_type == 'text_input':
+                inputs[label] = st.text_input(label)
+            elif input_type == 'selectbox':
+                options = field[2]
+                inputs[label] = st.selectbox(label, [opt[1] for opt in options])
 
-    elif table == 'sous_prefecture':
-        with st.form(key='sous_prefecture_form'):
-            nom_sous_prefecture = st.text_input("Nom Sous-Prefecture")
-            departements = data.get_departement()  # Assurez-vous que cette fonction renvoie les départements disponibles
-            nom_departement = st.selectbox("Nom du Département", [departement[1] for departement in departements])
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if nom_sous_prefecture and nom_departement:
-                    insert_data('sous_prefecture', (nom_sous_prefecture, nom_departement))
-                    st.success("Enregistrement réussi pour la table sous-prefecture.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
-
-    elif table == 'zone_denombrement':
-        with st.form(key='zone_denombrement_form'):
-            st.write("Exemple nom ZD:ZD4006")
-            nom_zd = st.text_input("Nom Zone de Denombrement")
-            sous_pref = data.get_sous_prefecture()  # Assurez-vous que cette fonction renvoie les sous-préfectures disponibles
-            nom_sous_prefecture = st.selectbox("Nom Sous-Préfecture", [sous_prefecture[1] for sous_prefecture in sous_pref])
-            nom_quartier = st.text_input("Nom Quartier")
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if nom_zd and nom_sous_prefecture and nom_quartier:
-                    insert_data('zone_denombrement', (nom_zd, nom_sous_prefecture, nom_quartier))
-                    st.success("Enregistrement réussi pour la table zone de denombrement.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
-
-    elif table == 'ilot':
-        with st.form(key='ilot_form'):
-            st.write("Exemple nom ilot:001")
-            nom_ilot = st.text_input("Nom Ilot")
-            zd = data.get_zone_denombrement()  # Assurez-vous que cette fonction renvoie les zones de dénombrement disponibles
-            nom_zd = st.selectbox("Nom Zone de Dénombrement", [zds[1] for zds in zd])
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if nom_ilot and nom_zd:
-                    insert_data('ilot', (nom_ilot, nom_zd))
-                    st.success("Enregistrement réussi pour la table ilot.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
-
-    elif table == 'superviseur':
-        with st.form(key='superviseur_form'):
-            matricule = st.text_input("Matricule")
-            nom_sup = st.text_input("Nom Superviseur")
-            regions = data.get_region()  # Assurez-vous que cette fonction renvoie les régions disponibles
-            nom_region = st.selectbox("Nom Région", [region[1] for region in regions])
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if matricule and nom_sup and nom_region:
-                    insert_data('superviseur', (matricule, nom_sup, nom_region))
-                    st.success("Enregistrement réussi pour la table superviseur.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
-
-    elif table == 'chef_equipe':
-        with st.form(key='chef_equipe_form'):
-            numero_equipe = st.text_input("Numéro Équipe")
-            matricule_ce = st.text_input("Matricule du CE")
-            nom_chef_equipe = st.text_input("Nom du chef équipe")
-            sup = data.get_superviseurs()
-            nom_sup = st.selectbox("Nom Superviseur", [sups[1] for sups in sup])
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if numero_equipe and nom_sup and matricule_ce and nom_chef_equipe:
-                    insert_data('chef_equipe', (numero_equipe, matricule_ce, nom_chef_equipe, nom_sup))
-                    st.success("Enregistrement réussi pour la table chef_equipe.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
-
-    elif table == 'agent':
-        with st.form(key='agent_form'):
-            numero_agent = st.text_input("Numéro Agent")
-            numero_equipe = st.text_input("Numéro Équipe")
-            submit_button = st.form_submit_button(label='Enregistrer')
-            if submit_button:
-                if numero_agent and numero_equipe:
-                    insert_data('agent', (numero_agent, numero_equipe))
-                    st.success("Enregistrement réussi pour la table agent.")
-                else:
-                    st.error("Tous les champs sont obligatoires.")
+        submit_button = st.form_submit_button(label='Enregistrer')
+        if submit_button:
+            if all(inputs.values()):
+                insert_data(table, tuple(inputs.values()))
+                st.success(f"Enregistrement réussi pour la table {table}.")
+            else:
+                st.error("Tous les champs sont obligatoires.")
 
 
+# Fonction pour authentifier l'utilisateur
 def authenticate_user(matricule, password):
     conn = sqlite3.connect("rgeeci.db")
     c = conn.cursor()
 
-    # Vérifier si l'utilisateur est un superviseur
-    c.execute('SELECT * FROM superviseur WHERE matricule = ? AND matricule = ?', (matricule, password))
-    superviseur = c.fetchone()
+    queries = {
+        'superviseur': 'SELECT * FROM superviseur WHERE matricule = ? AND matricule = ?',
+        'chef_equipe': 'SELECT * FROM chef_equipe WHERE matricule_ce = ? AND matricule_ce = ?'
+    }
 
-    if superviseur:
-        conn.close()
-        return 'superviseur', matricule
-
-    # Vérifier si l'utilisateur est un chef d'équipe
-    c.execute('SELECT * FROM chef_equipe WHERE matricule_ce = ? AND matricule_ce = ?', (matricule, password))
-    chef_equipe = c.fetchone()
-
-    if chef_equipe:
-        conn.close()
-        return 'chef_equipe', matricule
+    for role, query in queries.items():
+        c.execute(query, (matricule, password))
+        user = c.fetchone()
+        if user:
+            conn.close()
+            return role, matricule
 
     conn.close()
     return None, None
 
 
-def get_numero_equipe(matricule):
+# Fonction pour récupérer le numéro d'équipe d'un chef d'équipe basé sur son matricule
+import sqlite3
+import streamlit as st
+from datetime import datetime
+
+# Fonction pour récupérer le numéro d'équipe
+def get_numero_equipe(matricule_ce):
     conn = sqlite3.connect("rgeeci.db")
     c = conn.cursor()
-    c.execute('SELECT numero_equipe FROM chef_equipe WHERE matricule_ce = ?', (matricule,))
+    c.execute("SELECT numero_equipe FROM chef_equipe WHERE matricule_ce = ?", (matricule_ce,))
     result = c.fetchone()
     conn.close()
-    if result:
-        return result[0]
-    return None
+    return result[0] if result else None
 
+# Fonction pour récupérer les ZD par numéro d'équipe
+def get_zone_denombrement_par_equipe(numero_equipe):
+    conn = sqlite3.connect("rgeeci.db")
+    c = conn.cursor()
+    c.execute("""
+    SELECT DISTINCT zd.nom_zd
+    FROM zone_denombrement zd
+    JOIN sous_prefecture sp ON zd.nom_sous_prefecture = sp.nom_sous_prefecture
+    JOIN departement d ON sp.nom_departement = d.nom_departement
+    JOIN region r ON d.nom_region = r.nom
+    JOIN superviseur s ON r.nom=s.nom_region
+    JOIN chef_equipe ce ON s.nom_sup = ce.nom_sup 
+    WHERE ce.numero_equipe = ?
+    """, (numero_equipe,))
+    result = c.fetchall()
+    conn.close()
+    return result
 
-# Fonction pour la page des réponses
+# Fonction pour récupérer les ilots par ZD
+def get_ilots_par_zd(nom_zd):
+    conn = sqlite3.connect("rgeeci.db")
+    c = conn.cursor()
+    c.execute("SELECT nom_ilot FROM ilot WHERE nom_zd = ?", (nom_zd,))
+    result = c.fetchall()
+    conn.close()
+    return result
+
+# Fonction pour insérer des réponses
+def insert_reponse_data(numero_equipe, nom_zd, nom_ilot, numero_agent, nbre_UE_total, nbre_UE_partiel, nbre_UE_informel,
+                        nbre_UE_formel, nbre_UE_refus, date_aujourdhui):
+    conn = sqlite3.connect("rgeeci.db")
+    c = conn.cursor()
+    c.execute('''
+    INSERT INTO reponse (numero_equipe, nom_zd, nom_ilot, numero_agent, nbre_UE_total, nbre_UE_partiel, nbre_UE_informel, nbre_UE_formel, nbre_UE_refus, date_aujourdhui)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+    numero_equipe, nom_zd, nom_ilot, numero_agent, nbre_UE_total, nbre_UE_partiel, nbre_UE_informel, nbre_UE_formel,
+    nbre_UE_refus, date_aujourdhui))
+    conn.commit()
+    conn.close()
+
+# Fonction principale pour l'enregistrement des réponses
 def reponse():
     st.title("Enregistrement des Réponses")
 
@@ -192,68 +165,63 @@ def reponse():
             st.write(f"Numéro d'équipe détecté : {numero_equipe}")
 
             with st.form(key='reponse_form'):
-                zd = data.get_zone_denombrement()
-                nom_zd = st.selectbox("Nom Zone de Dénombrement", [zds[1] for zds in zd])
+                # Récupérer les ZD et les afficher dans le sélecteur
+                zds = get_zone_denombrement_par_equipe(numero_equipe)
+                if zds:
+                    nom_zd = st.selectbox("Nom Zone de Dénombrement", [zd[0] for zd in zds])
 
-                ilots = data.get_ilot()
-                nom_ilot = st.selectbox("Nom Ilot", [ilot[1] for ilot in ilots])
+                    # Récupérer les ilots par ZD et les afficher dans le sélecteur
+                    ilots = get_ilots_par_zd(nom_zd)
+                    if ilots:
+                        nom_ilot = st.selectbox("Nom Ilot", [ilot[0] for ilot in ilots])
 
-                numero_agent = st.number_input("Numéro Agent", min_value=0)
-                nbre_UE_total = st.number_input("Nombre d'UE Total", min_value=0)
-                nbre_UE_partiel = st.number_input("Nombre d'UE Partiel", min_value=0)
-                nbre_UE_informel = st.number_input("Nombre d'UE Informel", min_value=0)
-                nbre_UE_formel = st.number_input("Nombre d'UE Formel", min_value=0)
-                nbre_UE_refus = st.number_input("Nombre d'UE Refus", min_value=0)
+                        numero_agent = st.number_input("Numéro Agent", min_value=0)
+                        nbre_UE_total = st.number_input("Nombre d'UE Total", min_value=0)
+                        nbre_UE_partiel = st.number_input("Nombre d'UE Partiel", min_value=0)
+                        nbre_UE_informel = st.number_input("Nombre d'UE Informel", min_value=0)
+                        nbre_UE_formel = st.number_input("Nombre d'UE Formel", min_value=0)
+                        nbre_UE_refus = st.number_input("Nombre d'UE Refus", min_value=0)
 
-                submit_button = st.form_submit_button(label='Enregistrer')
-                if submit_button:
-                    if (nom_zd and nom_ilot and numero_agent):
-                        # Récupération de la date actuelle
-                        import datetime
-                        date_aujourdhui=datetime.datetime.now().strftime("%Y-%m-%d")
-
-                        # Insertion des données dans la table 'reponse'
-                        data.insert_reponse_data(numero_equipe, nom_zd, nom_ilot, numero_agent, nbre_UE_total,
-                                                 nbre_UE_partiel, nbre_UE_informel, nbre_UE_formel, nbre_UE_refus,
-                                                 date_aujourdhui)
-                        st.success("Enregistrement réussi pour la table reponse.")
+                        # Bouton de soumission du formulaire
+                        submitted = st.form_submit_button(label='Enregistrer')
+                        if submitted:
+                            date_aujourdhui = datetime.now().date()
+                            insert_reponse_data(numero_equipe, nom_zd, nom_ilot, numero_agent, nbre_UE_total,
+                                                nbre_UE_partiel, nbre_UE_informel, nbre_UE_formel, nbre_UE_refus,
+                                                date_aujourdhui)
+                            st.success("Enregistrement réussi.")
                     else:
-                        st.error("Tous les champs sont obligatoires.")
+                        st.warning("Aucun ilot trouvé pour cette ZD.")
+                else:
+                    st.warning("Aucune ZD trouvée pour cette équipe.")
         else:
-            st.error("Numéro d'équipe non trouvé pour ce chef d'équipe.")
+            st.error("Numéro d'équipe non détecté.")
     else:
         st.error("Utilisateur non authentifié.")
 
+# Appel de la fonction principale
 
-# Ajout de CSS pour styliser la page
+
+
+# CSS personnalisé pour le style de la page
 st.markdown(
     """
     <style>
-        .st-eb {
-            background-color: #f0f0f0; /* Couleur de fond */
-            padding: 20px; /* Espacement intérieur */
-            border-radius: 10px; /* Coins arrondis */
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1); /* Ombre légère */
-        }
-        .st-eb-header {
-            background-color: #ffffff; /* Couleur d'arrière-plan de l'en-tête */
-            padding: 10px; /* Espacement intérieur de l'en-tête */
-            border-bottom: 1px solid #e6e6e6; /* Bordure inférieure */
-            border-radius: 10px 10px 0 0; /* Coins arrondis, seulement en haut */
-        }
-        .st-eb-content {
-            padding: 20px; /* Espacement intérieur du contenu */
-        }
-        .st-eb-footer {
-            text-align: center; /* Alignement du texte au centre */
-            margin-top: 20px; /* Marge en haut */
-        }
+    .stApp {
+        background-color: #f0f2f6;
+    }
+    .stSidebar {
+        background-color: #343a40;
+        color: white;
+    }
+    .stButton>button {
+        background-color: #FF8C00;
+        color: white;
+        border-radius: 5px;
+    }
     </style>
-    """,
-    unsafe_allow_html=True
+    """, unsafe_allow_html=True
 )
 
-
-
-
+# Interface de connexion utilisateur
 

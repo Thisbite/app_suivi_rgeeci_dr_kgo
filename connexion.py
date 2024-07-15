@@ -6,10 +6,8 @@ import streamlit as st
 
 def get_reponse_data():
     conn = sqlite3.connect("rgeeci.db")
-
     conn.execute('PRAGMA encoding="UTF-8";')
 
-    c = conn.cursor()
     query = '''
         SELECT 
             r.numero_equipe,
@@ -35,16 +33,16 @@ def get_reponse_data():
         LEFT JOIN departement d ON sp.nom_departement = d.nom_departement
         LEFT JOIN region rg ON d.nom_region = rg.nom
     '''
-    c.execute(query)
-    data = c.fetchall()
-    df = pd.DataFrame(data, columns=["Numero equipe", "Numero agent", "Region", "Departement",
-                                     "Sous-prefecture", "ZD", "Ilot", "Nombre UE total",
-                                     "Nombre UE partiel", "Nombre UE informel", "Nombre UE formel",
-                                     "Nombre UE refus", "Date", "Nom Superviseur"])
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+
+    df.columns = ["Numero equipe", "Numero agent", "Region", "Departement",
+                  "Sous-prefecture", "ZD", "Ilot", "Nombre UE total",
+                  "Nombre UE partiel", "Nombre UE informel", "Nombre UE formel",
+                  "Nombre UE refus", "Date", "Nom Superviseur"]
 
     # Convertir DataFrame en CSV avec encodage UTF-8
     csv = df.to_csv(index=False, encoding='utf-8-sig')
-    # Utilisez 'utf-8-sig' pour éviter l'ajout de BOM
 
     # Encodage en base64
     b64 = base64.b64encode(csv.encode('utf-8')).decode()
@@ -55,18 +53,12 @@ def get_reponse_data():
     # Afficher lien dans Streamlit
     st.markdown(href, unsafe_allow_html=True)
 
-    conn.close()
     return df
-
-
-import sqlite3
-import pandas as pd
 
 
 def statistiques_par_agent_et_entite():
     conn = sqlite3.connect("rgeeci.db")
 
-    # Chargement des données à partir de la base de données
     query = '''
         SELECT 
             r.numero_equipe,
@@ -92,14 +84,14 @@ def statistiques_par_agent_et_entite():
         LEFT JOIN departement d ON sp.nom_departement = d.nom_departement
         LEFT JOIN region rg ON d.nom_region = rg.nom
     '''
-
     df = pd.read_sql_query(query, conn)
     conn.close()
 
     # Calcul du nombre moyen d'UE total par agent
-    moyen_agt = df.groupby(['nom_region','numero_equipe','numero_agent'])['nbre_UE_total'].mean()
+    moyen_agt = df.groupby(['nom_region', 'numero_equipe', 'numero_agent'])['nbre_UE_total'].mean().reset_index()
+    moyen_agt = moyen_agt.sort_values(by='nbre_UE_total', ascending=False)
 
-    # Calcul du nombre d'UE par chef d'équipe, région, sous-préfecture et département
+    # Calcul des statistiques par sous-préfecture
     stats_sous_prefecture = df.groupby(['numero_equipe', 'nom_region', 'nom_departement', 'nom_sous_prefecture']) \
         .agg({
         'nbre_UE_total': 'sum',
@@ -107,9 +99,9 @@ def statistiques_par_agent_et_entite():
         'nbre_UE_informel': 'sum',
         'nbre_UE_formel': 'sum',
         'nbre_UE_refus': 'sum'
-    }).reset_index()
+    }).reset_index().sort_values(by='nbre_UE_total', ascending=False)
 
-    # Calcul du nombre d'UE par chef d'équipe, région, sous-préfecture et département
+    # Calcul des statistiques par département
     stats_depart = df.groupby(['numero_equipe', 'nom_region', 'nom_departement']) \
         .agg({
         'nbre_UE_total': 'sum',
@@ -117,8 +109,9 @@ def statistiques_par_agent_et_entite():
         'nbre_UE_informel': 'sum',
         'nbre_UE_formel': 'sum',
         'nbre_UE_refus': 'sum'
-    }).reset_index()
-    # Calcul du nombre d'UE par chef d'équipe, région, sous-préfecture et département
+    }).reset_index().sort_values(by='nbre_UE_total', ascending=False)
+
+    # Calcul des statistiques par région
     stats_region = df.groupby(['nom_region']) \
         .agg({
         'nbre_UE_total': 'sum',
@@ -126,6 +119,34 @@ def statistiques_par_agent_et_entite():
         'nbre_UE_informel': 'sum',
         'nbre_UE_formel': 'sum',
         'nbre_UE_refus': 'sum'
-    }).reset_index()
+    }).reset_index().sort_values(by='nbre_UE_total', ascending=False)
 
-    return moyen_agt, stats_sous_prefecture,stats_depart,stats_region
+    return moyen_agt, stats_sous_prefecture, stats_depart, stats_region
+
+
+# Utilisation des fonctions dans Streamlit
+def main():
+    st.title("Statistiques RGEECI")
+
+    st.subheader("Données de réponse")
+    df = get_reponse_data()
+    st.dataframe(df)
+
+    st.subheader("Statistiques par Agent et Entité")
+    moyen_agt, stats_sous_prefecture, stats_depart, stats_region = statistiques_par_agent_et_entite()
+
+    st.write("**Rendement moyen par agents**")
+    st.dataframe(moyen_agt)
+
+    st.write("**Statistiques par Sous-prefecture**")
+    st.dataframe(stats_sous_prefecture)
+
+    st.write("**Statistiques par Département**")
+    st.dataframe(stats_depart)
+
+    st.write("**Statistiques par Région**")
+    st.dataframe(stats_region)
+
+
+if __name__ == "__main__":
+    main()
